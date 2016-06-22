@@ -10,7 +10,7 @@ import scala.util.{Success, Try}
 
 object InstantParser extends Parser[Instant] {
   def apply(s: String): Either[String, Instant] = {
-    Try(new Instant(s.replace(".", "").toLong)).transform(
+    Try(new Instant(s.toLong)).transform(
       s => Success(Right(s)),
       f => Success(Left(f.getMessage))).get
   }
@@ -29,7 +29,7 @@ object LogAnalyzer {
 
   def duplicate(e1: LogEntry, e2:  LogEntry): Boolean = {
     val interval = e2.time.getMillis - e1.time.getMillis
-    interval > 0 && interval < 1000 && e1.req == e2.req
+    interval >= 0 && interval < 1000 && e1.req == e2.req
   }
 
   type ScanResult = (Seq[LogEntry], Option[Seq[LogEntry]])
