@@ -6,14 +6,20 @@ Check out the corresponding [blog post](https://www.becompany.ch/en/blog/tech/20
 
 ## Install
 
-    sbt assembly
+```Shell
+sbt assembly
+```
     
 ## Run
 
 Generate log data:
 
-    ./log-analysis.sh generate > target/test.log
+```Shell
+./log-analysis.sh generate > target/test.log
+```
     
 Analyze log data:
 
-    ./log-analysis.sh analyze target/test.log
+```Shell
+./log-analysis.sh analyze target/test.log
+```
