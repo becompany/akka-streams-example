@@ -7,11 +7,11 @@ import ch.becompany.akka.io.file.FileReader
 
 object LogAnalyzer {
 
-  import ch.becompany.akka.io.csv.Parsers._
-  import LogParsers._
-
   implicit val system = ActorSystem("log-analyzer")
   implicit val materializer = ActorMaterializer()
+
+  import ch.becompany.akka.io.csv.Parsers._
+  import LogParsers._
 
   lazy val csv = new CsvReader[LogEntry]
 
