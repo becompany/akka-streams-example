@@ -43,15 +43,6 @@ class TailPublisher extends ActorPublisher[ByteString] {
   private val MaxBufferSize = 1000
   private var buf = Vector.empty[ByteString]
 
-  private def emitLine(line: ByteString) = {
-    if (buf.isEmpty && totalDemand > 0)
-      onNext(line)
-    else {
-      buf :+= line
-      emitBuffer()
-    }
-  }
-
   def receive = {
     case Line(_) if buf.size == MaxBufferSize =>
       throw new IllegalStateException("Buffer full")
@@ -59,6 +50,15 @@ class TailPublisher extends ActorPublisher[ByteString] {
     case Error(t) => onError(t)
     case Request(_) => emitBuffer()
     case Cancel => context.stop(self)
+  }
+
+  private def emitLine(line: ByteString) = {
+    if (buf.isEmpty && totalDemand > 0)
+      onNext(line)
+    else {
+      buf :+= line
+      emitBuffer()
+    }
   }
 
   @tailrec private final def emitBuffer(): Unit =
