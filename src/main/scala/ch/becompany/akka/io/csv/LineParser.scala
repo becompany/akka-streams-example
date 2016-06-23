@@ -2,8 +2,8 @@ package ch.becompany.akka.io.csv
 
 import shapeless.{::, Generic, HList, HNil}
 
-trait LineParser[T] {
-  def apply(l: List[String]): Either[List[String], T]
+trait LineParser[Out] {
+  def apply(l: List[String]): Either[List[String], Out]
 }
 
 object LineParser {
@@ -12,13 +12,14 @@ object LineParser {
     def apply(s: List[String]): Either[List[String], HNil] =
       s match {
         case Nil => Right(HNil)
-        case h +: t => Left(List(s"""Expected end of line, got "$h"."""))
+        case h +: t => Left(List(s"""Expected end, got "$h"."""))
       }
   }
 
   implicit def hconsParser[H: Parser, T <: HList : LineParser]: LineParser[H :: T] =
     new LineParser[H :: T] {
       def apply(s: List[String]): Either[List[String], H :: T] = s match {
+        case Nil => Left(List("Excepted list element."))
         case h +: t => {
           val head = implicitly[Parser[H]].apply(h)
           val tail = implicitly[LineParser[T]].apply(t)
@@ -32,12 +33,15 @@ object LineParser {
       }
     }
 
-  implicit def caseClassParser[A, R <: HList]
-  (implicit gen: Generic[A] { type Repr = R }, reprParser: LineParser[R]): LineParser[A] =
-    new LineParser[A] {
-      def apply(s: List[String]): Either[List[String], A] =
+  implicit def caseClassParser[Out, R <: HList](
+       implicit gen: Generic[Out] { type Repr = R },
+       reprParser: LineParser[R]): LineParser[Out] =
+    new LineParser[Out] {
+      def apply(s: List[String]): Either[List[String], Out] =
         reprParser.apply(s).right.map(gen.from)
     }
 
-  def apply[A](s: List[String])(implicit parser: LineParser[A]): Either[List[String], A] = parser(s)
+  def apply[Out](s: List[String])(implicit parser: LineParser[Out]):
+      Either[List[String], Out] =
+    parser(s)
 }

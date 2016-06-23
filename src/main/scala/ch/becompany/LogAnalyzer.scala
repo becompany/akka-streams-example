@@ -2,30 +2,18 @@ package ch.becompany
 
 import _root_.akka.actor.ActorSystem
 import _root_.akka.stream.ActorMaterializer
-import ch.becompany.akka.io.csv.{Csv, CsvSpec, Parser}
+import ch.becompany.akka.io.csv.CsvReader
 import ch.becompany.akka.io.file.FileReader
-import org.joda.time.Instant
-
-import scala.util.{Success, Try}
-
-object InstantParser extends Parser[Instant] {
-  def apply(s: String): Either[String, Instant] = {
-    Try(new Instant(s.toLong)).transform(
-      s => Success(Right(s)),
-      f => Success(Left(f.getMessage))).get
-  }
-}
 
 object LogAnalyzer {
 
   import ch.becompany.akka.io.csv.Parsers._
+  import LogParsers._
 
   implicit val system = ActorSystem("log-analyzer")
   implicit val materializer = ActorMaterializer()
 
-  implicit val instantParser = InstantParser
-  lazy val csvSpec = CsvSpec(encoding = Some("UTF-8"))
-  lazy val csv = new Csv[LogEntry](csvSpec)
+  lazy val csv = new CsvReader[LogEntry]
 
   def duplicate(e1: LogEntry, e2:  LogEntry): Boolean = {
     val interval = e2.time.getMillis - e1.time.getMillis
@@ -43,7 +31,7 @@ object LogAnalyzer {
     }
   }
 
-  def output(e: LogEntry) = s"${e.ip} - ${e.time} - ${e.req}"
+  def output(e: LogEntry) = s"${e.ip.getHostAddress} - ${e.time} - ${e.req}"
 
   def output(entries: Seq[LogEntry]): String =
     (" " ++ entries.map(output)).mkString("\n")

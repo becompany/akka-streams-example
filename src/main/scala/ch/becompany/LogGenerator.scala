@@ -1,5 +1,7 @@
 package ch.becompany
 
+import java.net.InetAddress
+
 import _root_.akka.stream.scaladsl.{Sink, Source}
 import _root_.akka.actor.ActorSystem
 import _root_.akka.stream.ActorMaterializer
@@ -18,7 +20,7 @@ object LogGenerator {
 
   val rand = new Random(System.currentTimeMillis)
 
-  def ips = Seq("1.2.3.4", "2.3.4.5", "3.4.5.6")
+  def ips = Seq("1.2.3.4", "2.3.4.5", "3.4.5.6").map(InetAddress.getByName)
   def urls = Seq("/foo", "/bar", "/baz")
   def userAgents = Seq("Firefox", "Chrome")
 
@@ -28,7 +30,7 @@ object LogGenerator {
     LogEntry(rnd(ips), Instant.now, rnd(urls), rnd(userAgents))
 
   def formatLogEntry(e: LogEntry): String =
-    Seq(e.ip, e.time.getMillis.toString, e.req, e.userAgent).
+    Seq(e.ip.getHostAddress, e.time.getMillis.toString, e.req, e.userAgent).
       map(s => s""""$s"""").
       mkString(",")
 

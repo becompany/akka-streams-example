@@ -1,19 +1,15 @@
 package ch.becompany.akka.io.csv
 
-import akka.stream.scaladsl.{FlowOps, Source}
-import com.github.tototoshi.csv.{CSVParser, DefaultCSVFormat, QUOTE_MINIMAL, Quoting}
+import akka.stream.scaladsl.Source
+import com.github.tototoshi.csv.{CSVParser, DefaultCSVFormat}
 
-class Csv[T](spec: CsvSpec = CsvSpec())(implicit parser: LineParser[T]) {
+class CsvReader[T : LineParser] {
 
-  private lazy val lineParser = new CSVParser(new DefaultCSVFormat() {
-    override val delimiter: Char = spec.fieldDelimiter
-    override val quoteChar: Char = spec.quote
-    override val quoting: Quoting = QUOTE_MINIMAL
-  })
+  private lazy val csvParser = new CSVParser(new DefaultCSVFormat() {})
 
   private def parseLine(line: String): Either[List[String], T] = {
-    lineParser.parseLine(line) match {
-      case Some(fields) => LineParser[T](fields.map(_.trim))
+    csvParser.parseLine(line) match {
+      case Some(fields) => LineParser[T](fields)
       case None => Left(List(s"Invalid line: $line"))
     }
   }
@@ -29,7 +25,7 @@ class Csv[T](spec: CsvSpec = CsvSpec())(implicit parser: LineParser[T]) {
   def read[Mat](source: Source[String, Mat]): Source[T, Mat] =
     source.
       map(parseLine).
-      map(_.fold[Option[T]](errors => { println(errors); None }, Some(_))).
+      map(_.fold(errors => { println(errors); None }, Some(_))).
       collect { case Some(t) => t }
 
 }
